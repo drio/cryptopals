@@ -8,6 +8,51 @@ import (
 	"strings"
 )
 
+func scoreText(s string) int {
+	// Simple scoring based on common English letter frequencies
+	frequencies := map[rune]int{
+		'e': 13, 't': 9, 'a': 8, 'o': 7, 'i': 7, 'n': 7,
+		's': 6, 'h': 6, 'r': 6, 'd': 4, 'l': 4, 'u': 2,
+	}
+
+	score := 0
+	for _, r := range strings.ToLower(s) {
+		if freq, exists := frequencies[r]; exists {
+			score += freq
+		}
+	}
+
+	return score
+}
+
+// score input Hex string based on chracter frequency
+func scoreHexStr(inputHex string, b byte) string {
+	hexByte := fmt.Sprintf("%02x", b)
+	hexKey := strings.Repeat(hexByte, len(inputHex)/2)
+
+	hexMsg := runXOR(inputHex, hexKey)
+
+	bytes, err := hex.DecodeString(hexMsg)
+	if err != nil {
+		return ""
+	}
+
+	asciiMsg := string(bytes)
+	if isReadableText(asciiMsg) {
+		s := scoreText(asciiMsg)
+		return (fmt.Sprintf("%d %s %s %s\n", s, string(b), hexKey, asciiMsg))
+	}
+	return ""
+}
+
+func scoreLoop(inputHex string) {
+	for b := byte(32); b <= 126; b++ {
+		if s := scoreHexStr(inputHex, b); s != "" {
+			fmt.Printf(scoreHexStr(inputHex, b))
+		}
+	}
+}
+
 // encodes a hex string into base64
 func hexToBase64(data string) string {
 	decoded, err := hex.DecodeString(data)
@@ -80,21 +125,4 @@ func isReadableText(s string) bool {
 	return float64(printableCount)/float64(len(s)) > 0.9 &&
 		spaceCount > 0 &&
 		float64(letterCount)/float64(len(s)) > 0.1
-}
-
-func scoreText(s string) int {
-	// Simple scoring based on common English letter frequencies
-	frequencies := map[rune]int{
-		'e': 13, 't': 9, 'a': 8, 'o': 7, 'i': 7, 'n': 7,
-		's': 6, 'h': 6, 'r': 6, 'd': 4, 'l': 4, 'u': 2,
-	}
-
-	score := 0
-	for _, r := range strings.ToLower(s) {
-		if freq, exists := frequencies[r]; exists {
-			score += freq
-		}
-	}
-
-	return score
 }
