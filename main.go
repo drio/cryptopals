@@ -47,5 +47,8 @@ I go crazy when I hear a cymbal`
 }
 
 func main() {
-	runSet1Ch5()
+	input1 := "this is a test"
+	input2 := "wokka wokka!!!"
+
+	fmt.Printf("%d \n", hamming(input1, input2))
 }

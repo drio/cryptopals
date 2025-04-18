@@ -5,8 +5,25 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"math/bits"
 	"strings"
 )
+
+func hamming(a, b string) int {
+	if len(a) != len(b) {
+		log.Fatalf("different len(): %d ,%d", len(a), len(b))
+	}
+
+	ba := []byte(a)
+	bb := []byte(b)
+	fmt.Printf("-%s\n", ba)
+	fmt.Printf("-%s\n", bb)
+	distance := 0
+	for i := 0; i < len(ba); i++ {
+		distance += bits.OnesCount8(ba[i] ^ bb[i])
+	}
+	return distance
+}
 
 // apply the repeating-key XOR rkey against the plaintText
 // returns the hex representation of the encrypted result
@@ -73,7 +90,7 @@ func scoreHexStr(inputHex string, b byte) string {
 func scoreLoop(inputHex string) {
 	for b := byte(32); b <= 126; b++ {
 		if s := scoreHexStr(inputHex, b); s != "" {
-			fmt.Print("%s", scoreHexStr(inputHex, b))
+			fmt.Printf("%s", scoreHexStr(inputHex, b))
 		}
 	}
 }
