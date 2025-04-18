@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -38,6 +39,13 @@ func runSet1Ch4() {
 	}
 }
 
+func runSet1Ch5() {
+	stanza := `Burning 'em, if you ain't quick and nimble
+I go crazy when I hear a cymbal`
+
+	fmt.Println(repeatXOR(stanza, "ICE"))
+}
+
 func main() {
-	runSet1Ch4()
+	runSet1Ch5()
 }

@@ -8,6 +8,31 @@ import (
 	"strings"
 )
 
+// apply the repeating-key XOR rkey against the plaintText
+// returns the hex representation of the encrypted result
+func repeatXOR(plainText, rkey string) string {
+	skey := stringToRepeateKey(rkey)
+
+	xorHexOutput := []string{}
+	for i, b := range plainText {
+		hb := fmt.Sprintf("%02x", b)
+		x := runXOR(hb, skey[i%len(rkey)])
+		xorHexOutput = append(xorHexOutput, x)
+	}
+	output := strings.Join(xorHexOutput, "")
+	return output
+}
+
+// convert a string to a slice of the hex values of each character so
+// it can be use as a repeating key
+func stringToRepeateKey(rkey string) []string {
+	skey := []string{}
+	for _, b := range rkey {
+		skey = append(skey, fmt.Sprintf("%02x", b))
+	}
+	return skey
+}
+
 func scoreText(s string) int {
 	// Simple scoring based on common English letter frequencies
 	frequencies := map[rune]int{
@@ -48,7 +73,7 @@ func scoreHexStr(inputHex string, b byte) string {
 func scoreLoop(inputHex string) {
 	for b := byte(32); b <= 126; b++ {
 		if s := scoreHexStr(inputHex, b); s != "" {
-			fmt.Printf(scoreHexStr(inputHex, b))
+			fmt.Print("%s", scoreHexStr(inputHex, b))
 		}
 	}
 }
