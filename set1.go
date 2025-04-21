@@ -168,3 +168,20 @@ func isReadableText(s string) bool {
 		spaceCount > 0 &&
 		float64(letterCount)/float64(len(s)) > 0.1
 }
+
+func getBytesFromBase64(a string) []byte {
+	aBytes, err := base64.StdEncoding.DecodeString(a)
+	if err != nil {
+		log.Fatalf("Failed to decode base64: %v", err)
+	}
+	return aBytes
+}
+
+func getBytesFromHex(hexStr string) []byte {
+	// Decode the hex string to bytes
+	bytes, err := hex.DecodeString(hexStr)
+	if err != nil {
+		log.Fatalf("Failed to decode hex string: %v", err)
+	}
+	return bytes
+}

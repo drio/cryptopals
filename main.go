@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -47,8 +48,13 @@ I go crazy when I hear a cymbal`
 }
 
 func main() {
-	input1 := "this is a test"
-	input2 := "wokka wokka!!!"
+	content, err := ioutil.ReadFile("data/set1/6.txt")
+	if err != nil {
+		log.Fatalf("Cannot read file: %s", err)
+	}
 
-	fmt.Printf("%d \n", hamming(input1, input2))
+	contentClean := strings.ReplaceAll(string(content), "\n", "")
+	cipherText := strings.ReplaceAll(string(contentClean), "\n", "")
+	fmt.Printf("%d", getBytesFromBase64(cipherText)[0])
+
 }
