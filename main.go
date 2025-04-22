@@ -56,7 +56,17 @@ func main() {
 	cipherText := strings.ReplaceAll(string(contentClean), "\n", "")
 	cipherBytes := getBytesFromBase64(cipherText)
 	//nhd := computeNormHD(cipherBytes, 3)
-	fmt.Printf("%d\n", len(cipherBytes))
-	nhd := computeNormHD([]byte("one two tres"), 4)
-	fmt.Printf("--> %d\n", nhd)
+
+	// keySize := 4
+	// nhd := computeNormHD(cipherBytes, keySize)
+	// fmt.Printf("%d %d\n", keySize, nhd)
+	printNormHD(cipherBytes, 4, 40)
+
+	// testing
+	/*
+		fmt.Printf("%d\n", len(cipherBytes))
+		s := []byte("aaaabbbbccccdddd")
+		nhd := computeBlockHD(s, 4)
+		fmt.Printf("%d | %d %d", nhd, s[0], s[1])
+	*/
 }

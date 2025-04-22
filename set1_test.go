@@ -4,32 +4,38 @@ import (
 	"testing"
 )
 
-func TestComputeNormHD(t *testing.T) {
-	// Test case with a sample input
-	testData := []byte("one two tres")
-	keySize := 4
-
-	result := computeNormHD(testData, keySize)
-	expected := 20
-
-	// The exact value might vary, so we'll just check if it's a reasonable result
-	if result < 0 {
-		t.Errorf("Normalized Hamming Distance should not be negative, got %d", result)
+func TestComputeBlockHD(t *testing.T) {
+	// Test normal cases in a loop
+	testCases := []struct {
+		data     []byte
+		keySize  int
+		expected int
+	}{
+		{[]byte("one one one one"), 4, 0},
+		{[]byte("aaaabbbbaaaaaaaa"), 4, 16},
+		{[]byte("one two tres cuatro"), 4, 25},
 	}
 
-	if result != expected {
-		t.Errorf("input %s keySize=%d should be %d but got %d", testData, keySize, expected, result)
+	for _, tc := range testCases {
+		result := computeBlockHD(tc.data, tc.keySize)
+		// The exact value might vary, so we'll just check if it's a reasonable result
+		if result < 0 {
+			t.Errorf("Normalized Hamming Distance should not be negative, got %d", result)
+		}
+		if result != tc.expected {
+			t.Errorf("input %s keySize=%d should be %d but got %d", tc.data, tc.keySize, tc.expected, result)
+		}
 	}
 
 	// Test with edge cases
 	var emptyData []byte
-	zeroKeySize := computeNormHD(emptyData, 4)
+	zeroKeySize := computeBlockHD(emptyData, 4)
 	if zeroKeySize != 0 {
 		t.Errorf("Expected 0 for empty data, got %d", zeroKeySize)
 	}
 
 	shortData := []byte("short")
-	smallKeySize := computeNormHD(shortData, 10)
+	smallKeySize := computeBlockHD(shortData, 10)
 	if smallKeySize != 0 {
 		t.Errorf("Expected 0 when keySize is larger than data length, got %d", smallKeySize)
 	}
