@@ -56,6 +56,7 @@ func main() {
 	cipherText := strings.ReplaceAll(string(contentClean), "\n", "")
 	cipherBytes := getBytesFromBase64(cipherText)
 	printNormHD(cipherBytes, 4, 40)
+	// make run  | sort -k4,4n
 
 	// testing
 	/*

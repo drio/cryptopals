@@ -9,17 +9,24 @@ import (
 	"strings"
 )
 
+type resultBlockHD struct {
+	sumHD float64
+	pairs float64
+}
+
 func printNormHD(text []byte, min, max int) {
 	for ks := min; ks <= max; ks++ {
-		sumHD := computeBlockHD(text, ks)
-		norm := int(sumHD / (ks * ks))
-		fmt.Printf("%d %d %d\n", ks, sumHD, norm)
+		result := computeBlockHD(text, ks)
+		norm := result.sumHD / result.pairs
+		norm = norm / float64(ks)
+		fmt.Printf("%d %2.0f %2.0f %2.2f\n", ks, result.pairs, result.sumHD, norm)
 	}
 }
 
 // Compute normalized hamming distances given a list of bytes and size
-func computeBlockHD(text []byte, keySize int) int {
+func computeBlockHD(text []byte, keySize int) resultBlockHD {
 	sumHD := 0
+	numBlocks := 0
 	i := 0
 	for {
 		j := i + keySize
@@ -32,11 +39,14 @@ func computeBlockHD(text []byte, keySize int) int {
 		hmd := hamming(string(ba), string(bb))
 		//fmt.Printf("[%s] [%s] %d\n", string(ba), string(bb), hmd)
 		sumHD += hmd
-
 		i = j
+		numBlocks += 1
 	}
 	//fmt.Printf("--sumHD: %d\n", sumHD)
-	return sumHD
+	return resultBlockHD{
+		float64(sumHD),
+		float64(numBlocks - 1),
+	}
 }
 
 func hamming(a, b string) int {
