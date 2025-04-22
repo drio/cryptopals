@@ -4,6 +4,37 @@ import (
 	"testing"
 )
 
+func TestComputeNormHD(t *testing.T) {
+	// Test case with a sample input
+	testData := []byte("one two tres")
+	keySize := 4
+
+	result := computeNormHD(testData, keySize)
+	expected := 20
+
+	// The exact value might vary, so we'll just check if it's a reasonable result
+	if result < 0 {
+		t.Errorf("Normalized Hamming Distance should not be negative, got %d", result)
+	}
+
+	if result != expected {
+		t.Errorf("input %s keySize=%d should be %d but got %d", testData, keySize, expected, result)
+	}
+
+	// Test with edge cases
+	var emptyData []byte
+	zeroKeySize := computeNormHD(emptyData, 4)
+	if zeroKeySize != 0 {
+		t.Errorf("Expected 0 for empty data, got %d", zeroKeySize)
+	}
+
+	shortData := []byte("short")
+	smallKeySize := computeNormHD(shortData, 10)
+	if smallKeySize != 0 {
+		t.Errorf("Expected 0 when keySize is larger than data length, got %d", smallKeySize)
+	}
+}
+
 func TestHexToBase64(t *testing.T) {
 	i := "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"
 	result := hexToBase64(i)

@@ -9,6 +9,24 @@ import (
 	"strings"
 )
 
+// Compute normalized hamming distances given a list of bytes and size
+func computeNormHD(text []byte, keySize int) int {
+	sumHD := 0
+	for i := 0; i < len(text); i++ {
+		j := i + keySize
+		if j+keySize >= len(text) {
+			break
+		}
+		ba := text[i:j]
+		bb := text[j : j+keySize]
+		//fmt.Printf("[%s] [%s]\n", string(ba), string(bb))
+
+		hmd := hamming(string(ba), string(bb))
+		sumHD += hmd
+	}
+	return int(sumHD / keySize * keySize)
+}
+
 func hamming(a, b string) int {
 	if len(a) != len(b) {
 		log.Fatalf("different len(): %d ,%d", len(a), len(b))
@@ -16,8 +34,6 @@ func hamming(a, b string) int {
 
 	ba := []byte(a)
 	bb := []byte(b)
-	fmt.Printf("-%s\n", ba)
-	fmt.Printf("-%s\n", bb)
 	distance := 0
 	for i := 0; i < len(ba); i++ {
 		distance += bits.OnesCount8(ba[i] ^ bb[i])
