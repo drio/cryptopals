@@ -145,7 +145,7 @@ func scoreHexStr(inputHex string, b byte) *score {
 func scoreLoop(inputHex string) {
 	for b := byte(32); b <= 126; b++ {
 		if s := scoreHexStr(inputHex, b); s != nil {
-			fmt.Printf("%d %s %s %s\n", s.score, s.key, s.hexKey, s.asciiMsg)
+			fmt.Printf("%2.2f %s %s %s\n", s.score, s.key, s.hexKey, s.asciiMsg)
 		}
 	}
 }

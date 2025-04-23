@@ -47,7 +47,7 @@ I go crazy when I hear a cymbal`
 	fmt.Println(repeatXOR(stanza, "ICE"))
 }
 
-func runSet1Ch6Part1() []byte {
+func loadSet1Ch6() []byte {
 	content, err := os.ReadFile("data/set1/6.txt")
 	if err != nil {
 		log.Fatalf("Cannot read file: %s", err)
@@ -56,27 +56,35 @@ func runSet1Ch6Part1() []byte {
 	contentClean := strings.ReplaceAll(string(content), "\n", "")
 	cipherText := strings.ReplaceAll(string(contentClean), "\n", "")
 	cipherBytes := getBytesFromBase64(cipherText)
+
 	return cipherBytes
 }
 
-func main() {
-	cipherBytes := runSet1Ch6Part1()
-	//printNormHD(cipherBytes, 4, 40)
-	// make run  | sort -k4,4n
+func runSet1Ch6(part int) {
+	cipherBytes := loadSet1Ch6()
 
-	kSize := 29
-	blocks := getBlocks(kSize, cipherBytes)
-	// for i, value := range blocks {
-	// 	fmt.Printf("%d %d\n", i, len(value))
-	// }
-
-	tBlocks := transpose(blocks, kSize)
-	for _, value := range tBlocks {
-		//fmt.Printf("%d %d\n", i, len(value))
-		hexValue := hex.EncodeToString(value)
-		scoreLoopBest(hexValue)
+	// Part 1: find key size
+	if part == 1 {
+		printNormHD(cipherBytes, 4, 40)
+		// make run  | sort -k4,4n
 	}
-	fmt.Printf("\n")
+
+	// Part 2: Find Key value
+	if part == 2 {
+		kSize := 29
+		blocks := getBlocks(kSize, cipherBytes)
+		// for i, value := range blocks {
+		// 	fmt.Printf("%d %d\n", i, len(value))
+		// }
+
+		tBlocks := transpose(blocks, kSize)
+		for _, value := range tBlocks {
+			//fmt.Printf("%d %d\n", i, len(value))
+			hexValue := hex.EncodeToString(value)
+			scoreLoopBest(hexValue)
+		}
+		fmt.Printf("\n")
+	}
 	// make run  | cut -c1-20 | grep -E '^[0-9]+' | sort -k1,1nr
 
 	// testing
@@ -86,4 +94,9 @@ func main() {
 		nhd := computeBlockHD(s, 4)
 		fmt.Printf("%d | %d %d", nhd, s[0], s[1])
 	*/
+}
+
+func main() {
+	//runSet1Ch6(2)
+	runSet1Ch3()
 }
