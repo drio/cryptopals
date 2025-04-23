@@ -91,14 +91,18 @@ func stringToRepeateKey(rkey string) []string {
 	return skey
 }
 
-func scoreText(s string) int {
+func scoreText(s string) float64 {
 	// Simple scoring based on common English letter frequencies
-	frequencies := map[rune]int{
-		'e': 13, 't': 9, 'a': 8, 'o': 7, 'i': 7, 'n': 7,
-		's': 6, 'h': 6, 'r': 6, 'd': 4, 'l': 4, 'u': 2,
+	frequencies := map[rune]float64{
+		' ': 0.13, 'e': 0.127, 't': 0.091, 'a': 0.082, 'o': 0.075,
+		'n': 0.067, 'i': 0.066, 's': 0.063, 'h': 0.061, 'r': 0.06,
+		'd': 0.043, 'l': 0.04, 'u': 0.028, 'c': 0.027, 'm': 0.024,
+		'f': 0.022, 'w': 0.02, 'y': 0.02, 'g': 0.02, 'p': 0.019,
+		'b': 0.015, 'v': 0.01, 'k': 0.008, 'x': 0.001, 'q': 0.001,
+		'j': 0.001, 'z': 0.001,
 	}
 
-	score := 0
+	score := 0.0
 	for _, r := range strings.ToLower(s) {
 		if freq, exists := frequencies[r]; exists {
 			score += freq
@@ -109,7 +113,7 @@ func scoreText(s string) int {
 }
 
 type score struct {
-	score    int
+	score    float64
 	key      string
 	hexKey   string
 	asciiMsg string
@@ -149,7 +153,7 @@ func scoreLoop(inputHex string) {
 // same as scoreLoop but only prints the key with the best score
 func scoreLoopBest(inputHex string) {
 	key := ""
-	bestScore := 0
+	bestScore := 0.0
 	for b := byte(32); b <= 126; b++ {
 		if s := scoreHexStr(inputHex, b); s != nil {
 			if s.score > bestScore {
