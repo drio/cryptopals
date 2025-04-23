@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"os"
@@ -46,7 +47,7 @@ I go crazy when I hear a cymbal`
 	fmt.Println(repeatXOR(stanza, "ICE"))
 }
 
-func main() {
+func runSet1Ch6Part1() []byte {
 	content, err := os.ReadFile("data/set1/6.txt")
 	if err != nil {
 		log.Fatalf("Cannot read file: %s", err)
@@ -55,8 +56,28 @@ func main() {
 	contentClean := strings.ReplaceAll(string(content), "\n", "")
 	cipherText := strings.ReplaceAll(string(contentClean), "\n", "")
 	cipherBytes := getBytesFromBase64(cipherText)
-	printNormHD(cipherBytes, 4, 40)
+	return cipherBytes
+}
+
+func main() {
+	cipherBytes := runSet1Ch6Part1()
+	//printNormHD(cipherBytes, 4, 40)
 	// make run  | sort -k4,4n
+
+	kSize := 29
+	blocks := getBlocks(kSize, cipherBytes)
+	// for i, value := range blocks {
+	// 	fmt.Printf("%d %d\n", i, len(value))
+	// }
+
+	tBlocks := transpose(blocks, kSize)
+	for _, value := range tBlocks {
+		//fmt.Printf("%d %d\n", i, len(value))
+		hexValue := hex.EncodeToString(value)
+		scoreLoopBest(hexValue)
+	}
+	fmt.Printf("\n")
+	// make run  | cut -c1-20 | grep -E '^[0-9]+' | sort -k1,1nr
 
 	// testing
 	/*

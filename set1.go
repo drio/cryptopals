@@ -14,12 +14,15 @@ type resultBlockHD struct {
 	pairs float64
 }
 
+// For each candidate keysize, compute the mean Hamming distance per byte:
+//  1. average the HD across all block pairs (removes sample‑size bias)
+//  2. divide by the keysize (removes length bias)
 func printNormHD(text []byte, min, max int) {
 	for ks := min; ks <= max; ks++ {
-		result := computeBlockHD(text, ks)
-		norm := result.sumHD / result.pairs
-		norm = norm / float64(ks)
-		fmt.Printf("%d %2.0f %2.0f %2.2f\n", ks, result.pairs, result.sumHD, norm)
+		r := computeBlockHD(text, ks)
+		norm := (r.sumHD / r.pairs) / float64(ks)
+		fmt.Printf("%2d  %2.0f  %2.0f  %.4f\n",
+			ks, r.pairs, r.sumHD, norm)
 	}
 }
 
@@ -105,8 +108,15 @@ func scoreText(s string) int {
 	return score
 }
 
+type score struct {
+	score    int
+	key      string
+	hexKey   string
+	asciiMsg string
+}
+
 // score input Hex string based on chracter frequency
-func scoreHexStr(inputHex string, b byte) string {
+func scoreHexStr(inputHex string, b byte) *score {
 	hexByte := fmt.Sprintf("%02x", b)
 	hexKey := strings.Repeat(hexByte, len(inputHex)/2)
 
@@ -114,23 +124,41 @@ func scoreHexStr(inputHex string, b byte) string {
 
 	bytes, err := hex.DecodeString(hexMsg)
 	if err != nil {
-		return ""
+		return nil
 	}
 
 	asciiMsg := string(bytes)
+
 	if isReadableText(asciiMsg) {
 		s := scoreText(asciiMsg)
-		return (fmt.Sprintf("%d %s %s %s\n", s, string(b), hexKey, asciiMsg))
+		return &score{s, string(b), hexKey, asciiMsg}
 	}
-	return ""
+	return nil
 }
 
+// enumerate all the printable characters in ascii and score each character
+// against the ciphertext
 func scoreLoop(inputHex string) {
 	for b := byte(32); b <= 126; b++ {
-		if s := scoreHexStr(inputHex, b); s != "" {
-			fmt.Printf("%s", scoreHexStr(inputHex, b))
+		if s := scoreHexStr(inputHex, b); s != nil {
+			fmt.Printf("%d %s %s %s\n", s.score, s.key, s.hexKey, s.asciiMsg)
 		}
 	}
+}
+
+// same as scoreLoop but only prints the key with the best score
+func scoreLoopBest(inputHex string) {
+	key := ""
+	bestScore := 0
+	for b := byte(32); b <= 126; b++ {
+		if s := scoreHexStr(inputHex, b); s != nil {
+			if s.score > bestScore {
+				bestScore = s.score
+				key = s.key
+			}
+		}
+	}
+	fmt.Printf("%s", key)
 }
 
 // encodes a hex string into base64
@@ -222,4 +250,38 @@ func getBytesFromHex(hexStr string) []byte {
 		log.Fatalf("Failed to decode hex string: %v", err)
 	}
 	return bytes
+}
+
+// given a cipherText return all the blocks of kSize
+func getBlocks(kSize int, cipherBytes []byte) [][]byte {
+	blocks := [][]byte{}
+	for i := 0; i < len(cipherBytes); i = i + kSize {
+		//fmt.Printf("%d %s\n", i, string(cipherBytes[i]))
+		end := i + kSize
+		if end > len(cipherBytes) {
+			end = len(cipherBytes)
+		}
+		blocks = append(blocks, cipherBytes[i:end])
+	}
+	return blocks
+}
+
+// given a list of blocks, return another set of blocks that contain
+// the nth byte of each block
+// [ [ b11, b12] [b21, b22], ...] -> [ [b11, b21, ...], [b12, b22, ...]
+func transpose(blocks [][]byte, kSize int) [][]byte {
+	tBlocks := [][]byte{}
+
+	for i := 0; i < kSize; i++ { // key index
+		tmpBlock := []byte{}
+		for _, block := range blocks { // block
+			if i >= len(block) {
+				break
+			}
+			tmpBlock = append(tmpBlock, block[i])
+		}
+		tBlocks = append(tBlocks, tmpBlock)
+	}
+
+	return tBlocks
 }
