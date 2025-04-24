@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"encoding/hex"
 	"fmt"
 	"log"
 	"os"
@@ -47,56 +46,17 @@ I go crazy when I hear a cymbal`
 	fmt.Println(repeatXOR(stanza, "ICE"))
 }
 
-func loadSet1Ch6() []byte {
-	content, err := os.ReadFile("data/set1/6.txt")
-	if err != nil {
-		log.Fatalf("Cannot read file: %s", err)
+func decodePlainText(cipherText, key []byte) []byte {
+	plainText := make([]byte, len(cipherText))
+	for i := 0; i < len(cipherText); i++ {
+		plainText[i] = cipherText[i] ^ key[i%len(key)]
 	}
-
-	contentClean := strings.ReplaceAll(string(content), "\n", "")
-	cipherText := strings.ReplaceAll(string(contentClean), "\n", "")
-	cipherBytes := getBytesFromBase64(cipherText)
-
-	return cipherBytes
-}
-
-func runSet1Ch6(part int) {
-	cipherBytes := loadSet1Ch6()
-
-	// Part 1: find key size
-	if part == 1 {
-		printNormHD(cipherBytes, 4, 40)
-		// make run  | sort -k4,4n
-	}
-
-	// Part 2: Find Key value
-	if part == 2 {
-		kSize := 29
-		blocks := getBlocks(kSize, cipherBytes)
-		// for i, value := range blocks {
-		// 	fmt.Printf("%d %d\n", i, len(value))
-		// }
-
-		tBlocks := transpose(blocks, kSize)
-		for _, value := range tBlocks {
-			//fmt.Printf("%d %d\n", i, len(value))
-			hexValue := hex.EncodeToString(value)
-			scoreLoopBest(hexValue)
-		}
-		fmt.Printf("\n")
-	}
-	// make run  | cut -c1-20 | grep -E '^[0-9]+' | sort -k1,1nr
-
-	// testing
-	/*
-		fmt.Printf("%d\n", len(cipherBytes))
-		s := []byte("aaaabbbbccccdddd")
-		nhd := computeBlockHD(s, 4)
-		fmt.Printf("%d | %d %d", nhd, s[0], s[1])
-	*/
+	return plainText
 }
 
 func main() {
-	//runSet1Ch6(2)
-	runSet1Ch3()
+	cipherBytes := loadSet1Ch6()
+	keyBytes := []byte(findKeyByTransposing())
+	plainTextBytes := decodePlainText(cipherBytes, keyBytes)
+	fmt.Printf("%s\n", string(plainTextBytes))
 }

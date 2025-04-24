@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"math/bits"
+	"os"
 	"strings"
 )
 
@@ -151,7 +152,7 @@ func scoreLoop(inputHex string) {
 }
 
 // same as scoreLoop but only prints the key with the best score
-func scoreLoopBest(inputHex string) {
+func scoreLoopBest(inputHex string) string {
 	key := ""
 	bestScore := 0.0
 	for b := byte(32); b <= 126; b++ {
@@ -162,14 +163,14 @@ func scoreLoopBest(inputHex string) {
 			}
 		}
 	}
-	fmt.Printf("%s", key)
+	return key
 }
 
 // encodes a hex string into base64
 func hexToBase64(data string) string {
 	decoded, err := hex.DecodeString(data)
 	if err != nil {
-		fmt.Println("Decode error:", err)
+		fmt.Println("Decode error: %s", err)
 		return ""
 	}
 
@@ -177,7 +178,17 @@ func hexToBase64(data string) string {
 	return sEnc
 }
 
+// encodes a hex to binary
+func hexToBin(data string) []byte {
+	decoded, err := hex.DecodeString(data)
+	if err != nil {
+		log.Fatalf("Decode error: %s ", err)
+	}
+	return decoded
+}
+
 // run xor on a and b
+// a and b have to be hex encoded
 func runXOR(a string, b string) string {
 	// Step 1: hex decode and get the bytes for the inputs
 	aBytes, err := hex.DecodeString(a)
@@ -190,18 +201,22 @@ func runXOR(a string, b string) string {
 		log.Fatalf("Failed to decode b: %v", err)
 	}
 
-	// Step 2:
-	if len(aBytes) != len(bBytes) {
-		log.Fatalf("Inputs must be of equal length")
-	}
-
-	result := make([]byte, len(aBytes))
-	for i := 0; i < len(aBytes); i++ {
-		result[i] = aBytes[i] ^ bBytes[i]
-	}
+	result := runXORBytes(aBytes, bBytes)
 
 	// Step 3 (convert to hex) coming next
 	return hex.EncodeToString(result)
+}
+
+func runXORBytes(a, b []byte) []byte {
+	if len(a) != len(b) {
+		log.Fatalf("Inputs must be of equal length")
+	}
+
+	result := make([]byte, len(a))
+	for i := 0; i < len(a); i++ {
+		result[i] = a[i] ^ b[i]
+	}
+	return result
 }
 
 func isReadableText(s string) bool {
@@ -288,4 +303,55 @@ func transpose(blocks [][]byte, kSize int) [][]byte {
 	}
 
 	return tBlocks
+}
+
+func loadSet1Ch6() []byte {
+	content, err := os.ReadFile("data/set1/6.txt")
+	if err != nil {
+		log.Fatalf("Cannot read file: %s", err)
+	}
+
+	contentClean := strings.ReplaceAll(string(content), "\n", "")
+	cipherText := strings.ReplaceAll(string(contentClean), "\n", "")
+	cipherBytes := getBytesFromBase64(cipherText)
+
+	return cipherBytes
+}
+
+// Set1-Part 1: find key size
+// make run  | sort -k4,4n
+// keysize is 29 for the challenge
+func rankKeySizes() {
+	cipherBytes := loadSet1Ch6()
+	printNormHD(cipherBytes, 4, 40)
+}
+
+// Set1-Part 2: with the keysize, now we can find the actual key
+func findKeyByTransposing() string {
+	cipherBytes := loadSet1Ch6()
+
+	// make run  | cut -c1-20 | grep -E '^[0-9]+' | sort -k1,1nr
+	kSize := 29
+	blocks := getBlocks(kSize, cipherBytes)
+	// for i, value := range blocks {
+	// 	fmt.Printf("%d %d\n", i, len(value))
+	// }
+
+	tBlocks := transpose(blocks, kSize)
+	r := []byte{}
+	for _, value := range tBlocks {
+		//fmt.Printf("%d %d\n", i, len(value))
+		hexValue := hex.EncodeToString(value)
+		r = append(r, []byte(scoreLoopBest(hexValue))[0])
+	}
+	key := string(r)
+	return fmt.Sprintf("%s", key)
+
+	// testing
+	/*
+		fmt.Printf("%d\n", len(cipherBytes))
+		s := []byte("aaaabbbbccccdddd")
+		nhd := computeBlockHD(s, 4)
+		fmt.Printf("%d | %d %d", nhd, s[0], s[1])
+	*/
 }
