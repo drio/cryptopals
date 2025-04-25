@@ -72,5 +72,5 @@ func runSet1Ch6(part int) {
 }
 
 func main() {
-	runSet1Ch4()
+	runSet1Ch6(2)
 }

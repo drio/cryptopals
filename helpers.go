@@ -17,3 +17,11 @@ func loadFile(fn string) *os.File {
 	}
 	return file
 }
+
+func readFileToMemory(filePath string) []byte {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		log.Fatalf("error reading file: %s", err)
+	}
+	return data
+}

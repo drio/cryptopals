@@ -19,6 +19,8 @@ type resultBlockHD struct {
 // For each candidate keysize, compute the mean Hamming distance per byte:
 //  1. average the HD across all block pairs (removes sample‑size bias)
 //  2. divide by the keysize (removes length bias)
+//
+// TODO: return directly the lowest hamming distance
 func printNormHD(text []byte, min, max int) {
 	for ks := min; ks <= max; ks++ {
 		r := computeBlockHD(text, ks)
