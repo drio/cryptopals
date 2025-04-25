@@ -46,17 +46,13 @@ I go crazy when I hear a cymbal`
 	fmt.Println(repeatXOR(stanza, "ICE"))
 }
 
-func decodePlainText(cipherText, key []byte) []byte {
-	plainText := make([]byte, len(cipherText))
-	for i := 0; i < len(cipherText); i++ {
-		plainText[i] = cipherText[i] ^ key[i%len(key)]
-	}
-	return plainText
-}
-
-func main() {
+func runSet1Ch6() {
 	cipherBytes := loadSet1Ch6()
 	keyBytes := []byte(findKeyByTransposing())
 	plainTextBytes := decodePlainText(cipherBytes, keyBytes)
 	fmt.Printf("%s\n", string(plainTextBytes))
+}
+
+func main() {
+	runSet1Ch6()
 }

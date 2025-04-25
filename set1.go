@@ -170,7 +170,7 @@ func scoreLoopBest(inputHex string) string {
 func hexToBase64(data string) string {
 	decoded, err := hex.DecodeString(data)
 	if err != nil {
-		fmt.Println("Decode error: %s", err)
+		fmt.Printf("Decode error: %s", err)
 		return ""
 	}
 
@@ -354,4 +354,12 @@ func findKeyByTransposing() string {
 		nhd := computeBlockHD(s, 4)
 		fmt.Printf("%d | %d %d", nhd, s[0], s[1])
 	*/
+}
+
+func decodePlainText(cipherText, key []byte) []byte {
+	plainText := make([]byte, len(cipherText))
+	for i := 0; i < len(cipherText); i++ {
+		plainText[i] = cipherText[i] ^ key[i%len(key)]
+	}
+	return plainText
 }

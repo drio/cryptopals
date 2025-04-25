@@ -9,7 +9,7 @@ func TestComputeBlockHD(t *testing.T) {
 	testCases := []struct {
 		data     []byte
 		keySize  int
-		expected int
+		expected float64
 	}{
 		{[]byte("one one one one"), 4, 0},
 		{[]byte("aaaabbbbaaaaaaaa"), 4, 16},
@@ -19,25 +19,25 @@ func TestComputeBlockHD(t *testing.T) {
 	for _, tc := range testCases {
 		result := computeBlockHD(tc.data, tc.keySize)
 		// The exact value might vary, so we'll just check if it's a reasonable result
-		if result < 0 {
-			t.Errorf("Normalized Hamming Distance should not be negative, got %d", result)
+		if result.sumHD < 0.0 {
+			t.Errorf("Normalized Hamming Distance should not be negative, got %2.2f", result)
 		}
-		if result != tc.expected {
-			t.Errorf("input %s keySize=%d should be %d but got %d", tc.data, tc.keySize, tc.expected, result)
+		if result.sumHD != tc.expected {
+			t.Errorf("input %s keySize=%d should be %2.2f but got %2.2f", tc.data, tc.keySize, tc.expected, result)
 		}
 	}
 
 	// Test with edge cases
 	var emptyData []byte
-	zeroKeySize := computeBlockHD(emptyData, 4)
-	if zeroKeySize != 0 {
-		t.Errorf("Expected 0 for empty data, got %d", zeroKeySize)
+	result := computeBlockHD(emptyData, 4)
+	if result.sumHD != 0.0 {
+		t.Errorf("Expected 0 for empty data, got %2.2f", result.sumHD)
 	}
 
 	shortData := []byte("short")
-	smallKeySize := computeBlockHD(shortData, 10)
-	if smallKeySize != 0 {
-		t.Errorf("Expected 0 when keySize is larger than data length, got %d", smallKeySize)
+	result = computeBlockHD(shortData, 10)
+	if result.sumHD != 0.0 {
+		t.Errorf("Expected 0 when keySize is larger than data length, got %2.2f", result.sumHD)
 	}
 }
 
