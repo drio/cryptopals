@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
@@ -113,57 +114,38 @@ func scoreText(s string) float64 {
 	return score
 }
 
-type score struct {
-	score    float64
-	key      string
-	hexKey   string
-	asciiMsg string
+// score input string based on chracter frequency
+func scoreStrRepeatKey(cipherText []byte, key []byte) float64 {
+	plainBytes := runXORBytes(cipherText, key)
+	plainText := string(plainBytes)
+	if isReadableText(plainText) {
+		s := scoreText(plainText)
+		return s
+	}
+	return 0.0
 }
 
-// score input Hex string based on chracter frequency
-func scoreHexStr(inputHex string, b byte) *score {
-	hexByte := fmt.Sprintf("%02x", b)
-	hexKey := strings.Repeat(hexByte, len(inputHex)/2)
-
-	hexMsg := runXOR(inputHex, hexKey)
-
-	bytes, err := hex.DecodeString(hexMsg)
-	if err != nil {
-		return nil
-	}
-
-	asciiMsg := string(bytes)
-
-	if isReadableText(asciiMsg) {
-		s := scoreText(asciiMsg)
-		return &score{s, string(b), hexKey, asciiMsg}
-	}
-	return nil
-}
-
-// enumerate all the printable characters in ascii and score each character
-// against the ciphertext
-func scoreLoop(inputHex string) {
+// generate a list of printable ascii bytes
+func getPrintableBytes() []byte {
+	pb := []byte{}
 	for b := byte(32); b <= 126; b++ {
-		if s := scoreHexStr(inputHex, b); s != nil {
-			fmt.Printf("%2.2f %s %s %s\n", s.score, s.key, s.hexKey, s.asciiMsg)
-		}
+		pb = append(pb, b)
 	}
+	return pb
 }
 
 // same as scoreLoop but only prints the key with the best score
-func scoreLoopBest(inputHex string) string {
-	key := ""
+func scoreLoopBest(input []byte) (float64, []byte) {
 	bestScore := 0.0
-	for b := byte(32); b <= 126; b++ {
-		if s := scoreHexStr(inputHex, b); s != nil {
-			if s.score > bestScore {
-				bestScore = s.score
-				key = s.key
-			}
+	bestKey := []byte{}
+	for _, b := range getPrintableBytes() {
+		rKey := bytes.Repeat([]byte{b}, len(input))
+		if score := scoreStrRepeatKey(input, rKey); score > bestScore {
+			bestScore = score
+			bestKey = rKey
 		}
 	}
-	return key
+	return bestScore, bestKey
 }
 
 // encodes a hex string into base64
@@ -341,8 +323,9 @@ func findKeyByTransposing() string {
 	r := []byte{}
 	for _, value := range tBlocks {
 		//fmt.Printf("%d %d\n", i, len(value))
-		hexValue := hex.EncodeToString(value)
-		r = append(r, []byte(scoreLoopBest(hexValue))[0])
+		//hexValue := hex.EncodeToString(value)
+		_, keyBytes := scoreLoopBest(value)
+		r = append(r, keyBytes[0])
 	}
 	key := string(r)
 	return fmt.Sprintf("%s", key)
@@ -362,4 +345,8 @@ func decodePlainText(cipherText, key []byte) []byte {
 		plainText[i] = cipherText[i] ^ key[i%len(key)]
 	}
 	return plainText
+}
+
+func toHex(sBytes []byte) string {
+	return fmt.Sprintf("%02x", sBytes)
 }
