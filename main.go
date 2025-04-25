@@ -56,11 +56,19 @@ I go crazy when I hear a cymbal`
 	fmt.Println(repeatXOR(stanza, "ICE"))
 }
 
-func runSet1Ch6() {
-	cipherBytes := loadSet1Ch6()
-	keyBytes := []byte(findKeyByTransposing())
-	plainTextBytes := decodePlainText(cipherBytes, keyBytes)
-	fmt.Printf("%s\n", string(plainTextBytes))
+func runSet1Ch6(part int) {
+	cipherBytes := loadFromFileInBase64("data/set1/6.txt")
+	// Set1-Part 1: find key size
+	// make run  | sort -k4,4n
+	// keysize is 29 for the challenge
+	if part == 1 {
+		printNormHD(cipherBytes, 4, 40)
+	} else {
+		keySize := 29
+		keyBytes := []byte(findKeyByTransposing(cipherBytes, keySize))
+		plainTextBytes := runSliceXOR(cipherBytes, keyBytes)
+		fmt.Printf("%s\n", string(plainTextBytes))
+	}
 }
 
 func main() {

@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"encoding/hex"
+	"log"
+	"strings"
 	"testing"
 )
 
@@ -28,12 +31,49 @@ func TestFixedXORCh02(t *testing.T) {
 
 func TestSingleByteXORCipherCh03(t *testing.T) {
 	inputHex := `1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736`
-	got := scoreLoopBest(inputHex)
+	_, bestKeyBytes := scoreLoopBest(hexToBin(inputHex))
+	gotKeyHex := string(bestKeyBytes[0])
 	expect := `X`
 
-	if got != expect {
-		t.Errorf("wrong key for plaintext\n%s\ngot %s\nexpected: %s", inputHex, got, expect)
+	if gotKeyHex != expect {
+		t.Errorf("wrong key for plaintext\n%s\ngot %s\nexpected: %s", inputHex, gotKeyHex, expect)
 	}
+}
+
+func TestSet1CipherCh04(t *testing.T) {
+	file := loadFile("data/set1/4.txt")
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	lineNumber := 1
+	bestScore := 0.0
+	bestPlainText := ""
+	for scanner.Scan() {
+		line := scanner.Text()
+		lineNumber++
+		if err := scanner.Err(); err != nil {
+			log.Fatalf("Error reading line %d: %v", lineNumber-1, err)
+		}
+
+		hexCipherText := strings.TrimSuffix(line, "\r")
+		cipherTextBytes := hexToBin(hexCipherText)
+		if score, rKey := scoreLoopBest(cipherTextBytes); score > bestScore {
+			plainBytes := runXORBytes(cipherTextBytes, rKey)
+			bestPlainText = string(plainBytes)
+			bestScore = score
+		}
+	}
+
+	expect := "Now that the party is jumping\n"
+	if bestPlainText != expect {
+		t.Errorf("\nexpected:\n%s\ngot:\n%s", expect, bestPlainText)
+	}
+}
+
+func TestSet1CipherCh05(t *testing.T) {
+}
+
+func TestSet1CipherCh06(t *testing.T) {
 }
 
 func TestComputeBlockHD(t *testing.T) {

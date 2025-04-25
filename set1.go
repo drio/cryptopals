@@ -134,7 +134,7 @@ func getPrintableBytes() []byte {
 	return pb
 }
 
-// same as scoreLoop but only prints the key with the best score
+// given a chunk of bytes, return the repeated key that scores best
 func scoreLoopBest(input []byte) (float64, []byte) {
 	bestScore := 0.0
 	bestKey := []byte{}
@@ -287,8 +287,8 @@ func transpose(blocks [][]byte, kSize int) [][]byte {
 	return tBlocks
 }
 
-func loadSet1Ch6() []byte {
-	content, err := os.ReadFile("data/set1/6.txt")
+func loadFromFileInBase64(fn string) []byte {
+	content, err := os.ReadFile(fn)
 	if err != nil {
 		log.Fatalf("Cannot read file: %s", err)
 	}
@@ -300,46 +300,22 @@ func loadSet1Ch6() []byte {
 	return cipherBytes
 }
 
-// Set1-Part 1: find key size
-// make run  | sort -k4,4n
-// keysize is 29 for the challenge
-func rankKeySizes() {
-	cipherBytes := loadSet1Ch6()
-	printNormHD(cipherBytes, 4, 40)
-}
-
-// Set1-Part 2: with the keysize, now we can find the actual key
-func findKeyByTransposing() string {
-	cipherBytes := loadSet1Ch6()
-
-	// make run  | cut -c1-20 | grep -E '^[0-9]+' | sort -k1,1nr
-	kSize := 29
+// given a ciphertext and a key size find the actual key
+func findKeyByTransposing(cipherBytes []byte, kSize int) string {
 	blocks := getBlocks(kSize, cipherBytes)
-	// for i, value := range blocks {
-	// 	fmt.Printf("%d %d\n", i, len(value))
-	// }
 
 	tBlocks := transpose(blocks, kSize)
 	r := []byte{}
 	for _, value := range tBlocks {
-		//fmt.Printf("%d %d\n", i, len(value))
-		//hexValue := hex.EncodeToString(value)
 		_, keyBytes := scoreLoopBest(value)
 		r = append(r, keyBytes[0])
 	}
 	key := string(r)
 	return fmt.Sprintf("%s", key)
-
-	// testing
-	/*
-		fmt.Printf("%d\n", len(cipherBytes))
-		s := []byte("aaaabbbbccccdddd")
-		nhd := computeBlockHD(s, 4)
-		fmt.Printf("%d | %d %d", nhd, s[0], s[1])
-	*/
 }
 
-func decodePlainText(cipherText, key []byte) []byte {
+// apply a key that is smaller than the input chunk by XORing repeatedly
+func runSliceXOR(cipherText, key []byte) []byte {
 	plainText := make([]byte, len(cipherText))
 	for i := 0; i < len(cipherText); i++ {
 		plainText[i] = cipherText[i] ^ key[i%len(key)]
@@ -347,14 +323,15 @@ func decodePlainText(cipherText, key []byte) []byte {
 	return plainText
 }
 
-func toHex(sBytes []byte) string {
-	return fmt.Sprintf("%02x", sBytes)
-}
-
-func loadFile(fn string) *os.File {
-	file, err := os.Open(fn)
-	if err != nil {
-		log.Fatalf("Error opening file: %v", err)
+// XOR two strings
+func xorBytes(a, b []byte) []byte {
+	if len(a) != len(b) {
+		log.Fatalf("Inputs must be of equal length")
 	}
-	return file
+
+	result := make([]byte, len(a))
+	for i := 0; i < len(a); i++ {
+		result[i] = a[i] ^ b[i]
+	}
+	return result
 }
