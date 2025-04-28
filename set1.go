@@ -426,3 +426,58 @@ func runSet1Ch7() {
 
 	fmt.Printf("%s\n", dst)
 }
+
+func runSet1Ch8() {
+	//cipherText := loadFromFileInBase64("data/set1/7.txt")
+	//blockSize := 16
+
+	/*
+		dst := make([]byte, len(cipherText))
+		for i := 0; i < len(cipherText); i += blockSize {
+			dst[i:i+blockSize],
+			cipherText[i:i+blockSize]
+		}
+	*/
+
+	//fmt.Printf("%s\n", dst)
+}
+
+func toHex(sBytes []byte) string {
+	return fmt.Sprintf("%02x", sBytes)
+}
+
+func loadFile(fn string) *os.File {
+	file, err := os.Open(fn)
+	if err != nil {
+		log.Fatalf("Error opening file: %v", err)
+	}
+	return file
+}
+
+func readFileToMemory(filePath string) []byte {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		log.Fatalf("error reading file: %s", err)
+	}
+	return data
+}
+
+func eachLine(fn string, cb func(string)) {
+	file := loadFile(fn)
+
+	scanner := bufio.NewScanner(file)
+	lineNumber := 0
+	for scanner.Scan() {
+		line := scanner.Text()
+		lineNumber++
+		if err := scanner.Err(); err != nil {
+			log.Fatalf("Error reading line %d: %v", lineNumber-1, err)
+		}
+		cb(line)
+	}
+
+	// Final check for any errors that might have occurred
+	if err := scanner.Err(); err != nil {
+		log.Fatalf("Error scanning file: %v", err)
+	}
+}
