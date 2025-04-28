@@ -436,9 +436,9 @@ func runSet1Ch8() {
 			mapDuplicates[string(block)] += 1
 		}
 
-		for _, numDups := range mapDuplicates {
-			if numDups > 1 {
-				totalDupCount += numDups
+		for _, count := range mapDuplicates {
+			if count > 1 {
+				totalDupCount += count - 1
 			}
 		}
 
