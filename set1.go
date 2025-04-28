@@ -350,21 +350,9 @@ func runSet1Ch3() {
 }
 
 func runSet1Ch4() {
-	file := loadFile("data/set1/4.txt")
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-
-	lineNumber := 1
 	bestScore := 0.0
 	bestPlainText := ""
-	for scanner.Scan() {
-		line := scanner.Text()
-		lineNumber++
-		if err := scanner.Err(); err != nil {
-			log.Fatalf("Error reading line %d: %v", lineNumber-1, err)
-		}
-
+	eachLine("data/set1/4.txt", func(line string, lineNum int) {
 		hexCipherText := strings.TrimSuffix(line, "\r")
 		cipherTextBytes := hexToBin(hexCipherText)
 		if score, rKey := scoreLoopBest(cipherTextBytes); score > bestScore {
@@ -372,12 +360,7 @@ func runSet1Ch4() {
 			bestPlainText = string(plainBytes)
 			bestScore = score
 		}
-	}
-
-	// Final check for any errors that might have occurred
-	if err := scanner.Err(); err != nil {
-		log.Fatalf("Error scanning file: %v", err)
-	}
+	})
 
 	fmt.Printf("%s", bestPlainText)
 }
@@ -427,19 +410,45 @@ func runSet1Ch7() {
 	fmt.Printf("%s\n", dst)
 }
 
-func runSet1Ch8() {
-	//cipherText := loadFromFileInBase64("data/set1/7.txt")
-	//blockSize := 16
-
-	/*
-		dst := make([]byte, len(cipherText))
-		for i := 0; i < len(cipherText); i += blockSize {
-			dst[i:i+blockSize],
-			cipherText[i:i+blockSize]
+func genBlocks(data []byte, blockSize int) [][]byte {
+	var chunks [][]byte
+	for i := 0; i < len(data); i += blockSize {
+		end := i + blockSize
+		if end > len(data) {
+			end = len(data)
 		}
-	*/
+		chunks = append(chunks, data[i:end])
+	}
+	return chunks
+}
 
-	//fmt.Printf("%s\n", dst)
+func runSet1Ch8() {
+	blockSize := 16
+	bestLine := ""
+	bestCount := 0
+
+	eachLine("data/set1/8.txt", func(line string, lineNum int) {
+		lineBytes := hexToBin(line)
+		mapDuplicates := make(map[string]int)
+		totalDupCount := 0
+
+		for _, block := range genBlocks(lineBytes, blockSize) {
+			mapDuplicates[string(block)] += 1
+		}
+
+		for _, numDups := range mapDuplicates {
+			if numDups > 1 {
+				totalDupCount += numDups
+			}
+		}
+
+		if totalDupCount > bestCount {
+			bestCount = totalDupCount
+			bestLine = line
+		}
+	})
+
+	fmt.Printf("%d %s\n", bestCount, bestLine)
 }
 
 func toHex(sBytes []byte) string {
@@ -462,8 +471,9 @@ func readFileToMemory(filePath string) []byte {
 	return data
 }
 
-func eachLine(fn string, cb func(string)) {
+func eachLine(fn string, cb func(string, int)) {
 	file := loadFile(fn)
+	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 	lineNumber := 0
@@ -473,7 +483,7 @@ func eachLine(fn string, cb func(string)) {
 		if err := scanner.Err(); err != nil {
 			log.Fatalf("Error reading line %d: %v", lineNumber-1, err)
 		}
-		cb(line)
+		cb(line, lineNumber)
 	}
 
 	// Final check for any errors that might have occurred
