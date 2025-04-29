@@ -66,7 +66,7 @@ func hamming(a, b string) int {
 	ba := []byte(a)
 	bb := []byte(b)
 	distance := 0
-	for i := 0; i < len(ba); i++ {
+	for i := range ba {
 		distance += bits.OnesCount8(ba[i] ^ bb[i])
 	}
 	return distance
@@ -199,7 +199,7 @@ func runXORBytes(a, b []byte) []byte {
 	}
 
 	result := make([]byte, len(a))
-	for i := 0; i < len(a); i++ {
+	for i := range a {
 		result[i] = a[i] ^ b[i]
 	}
 	return result
@@ -214,7 +214,7 @@ func isReadableText(s string) bool {
 	spaceCount := 0
 	letterCount := 0
 
-	for i := 0; i < len(s); i++ {
+	for i := range s {
 		// Printable ASCII
 		if s[i] >= 32 && s[i] <= 126 {
 			printableCount++
@@ -262,10 +262,7 @@ func getBlocks(kSize int, cipherBytes []byte) [][]byte {
 	blocks := [][]byte{}
 	for i := 0; i < len(cipherBytes); i = i + kSize {
 		//fmt.Printf("%d %s\n", i, string(cipherBytes[i]))
-		end := i + kSize
-		if end > len(cipherBytes) {
-			end = len(cipherBytes)
-		}
+		end := min(i+kSize, len(cipherBytes))
 		blocks = append(blocks, cipherBytes[i:end])
 	}
 	return blocks
@@ -277,7 +274,7 @@ func getBlocks(kSize int, cipherBytes []byte) [][]byte {
 func transpose(blocks [][]byte, kSize int) [][]byte {
 	tBlocks := [][]byte{}
 
-	for i := 0; i < kSize; i++ { // key index
+	for i := range kSize {
 		tmpBlock := []byte{}
 		for _, block := range blocks { // block
 			if i >= len(block) {
@@ -321,7 +318,7 @@ func findKeyByTransposing(cipherBytes []byte, kSize int) string {
 // apply a key that is smaller than the input chunk by XORing repeatedly
 func runSliceXOR(cipherText, key []byte) []byte {
 	plainText := make([]byte, len(cipherText))
-	for i := 0; i < len(cipherText); i++ {
+	for i := range cipherText {
 		plainText[i] = cipherText[i] ^ key[i%len(key)]
 	}
 	return plainText
@@ -334,7 +331,7 @@ func xorBytes(a, b []byte) []byte {
 	}
 
 	result := make([]byte, len(a))
-	for i := 0; i < len(a); i++ {
+	for i := range a {
 		result[i] = a[i] ^ b[i]
 	}
 	return result
@@ -413,10 +410,7 @@ func runSet1Ch7() {
 func genBlocks(data []byte, blockSize int) [][]byte {
 	var chunks [][]byte
 	for i := 0; i < len(data); i += blockSize {
-		end := i + blockSize
-		if end > len(data) {
-			end = len(data)
-		}
+		end := min(i+blockSize, len(data))
 		chunks = append(chunks, data[i:end])
 	}
 	return chunks
