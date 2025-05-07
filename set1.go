@@ -387,7 +387,7 @@ func runSet1Ch6(part int) {
 // AES-128 (cipher)
 // Mode in which we use AES-128: ECB (Electronic Codebook)
 // In ECB mode:
-// 1. plaintext is divided into 128-bit blocks.
+// 1. plaintext is divided into keysize blocks.
 // 2. Each block is encrypted independently using the same key.
 func runSet1Ch7() {
 	cipherText := loadFromFileInBase64("data/set1/7.txt")
