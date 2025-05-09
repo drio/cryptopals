@@ -17,16 +17,40 @@ import (
 // Even if the plaintext length is already a multiple of 16, we still add
 // a full block of padding (16 bytes). This is required by PKCS#7 so that
 // the unpadding logic can always safely determine and strip padding.
-func padBlock(plainText []byte, blockSize int) []byte {
+func padPCKS7(plainText []byte, blockSize int) []byte {
 	padLen := blockSize - (len(plainText) % blockSize)
 	padding := bytes.Repeat([]byte{byte(padLen)}, padLen)
 	return append(plainText, padding...)
 }
 
+// Removes PKCS#7 padding.
+// It is critical to verify that all padding bytes have the correct value;
+// otherwise, we may process invalid data, which can lead to security
+// vulnerabilities like padding oracle attacks.
+func unpadPKCS7(plainText []byte) []byte {
+	if len(plainText) == 0 {
+		panic("unpadPKCS7: input is empty")
+	}
+
+	padLen := int(plainText[len(plainText)-1])
+	if padLen == 0 || padLen > len(plainText) {
+		panic("unpadPKCS7: invalid padding")
+	}
+
+	// Verify all padding bytes match padLen
+	for _, b := range plainText[len(plainText)-padLen:] {
+		if int(b) != padLen {
+			panic("unpadPKCS7: invalid padding bytes")
+		}
+	}
+
+	return plainText[:len(plainText)-padLen]
+}
+
 func runSet2Ch09() {
 	i := "YELLOW SUBMARINE"
 	bi := []byte(i)
-	output := string(padBlock(bi, 20))
+	output := string(padPCKS7(bi, 20))
 	fmt.Printf("input  %x\noutput %x\n", i, output)
 }
 
@@ -56,7 +80,7 @@ func encryptCBC(plainText, key, iv []byte) []byte {
 	block := getAESCipher(key)
 	blockSize := 16
 
-	paddedPlainText := padBlock(plainText, blockSize)
+	paddedPlainText := padPCKS7(plainText, blockSize)
 	cipherText := make([]byte, len(paddedPlainText))
 	prevBlock := iv
 
@@ -108,7 +132,8 @@ func runSet2Ch10() {
 
 	cipherText := encryptCBC(plainText, key, iv)
 	result := decryptCBC(cipherText, key, iv)
+	unpadResult := unpadPKCS7(result)
 	fmt.Printf("inputText : %s\n", plainText)
 	fmt.Printf("cipherText: %x\n", cipherText)
-	fmt.Printf("result    : %s\n", result)
+	fmt.Printf("result    : %s\n", unpadResult)
 }
