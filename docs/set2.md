@@ -16,6 +16,23 @@ padded to 20 bytes would be:
 
 `"YELLOW SUBMARINE\x04\x04\x04\x04"`
 
+### Drio notes
+
+Cryptographic padding and unpadding might seem simple at first, but there are a
+lot of subtleties. I'm starting to realize that crypto code is full of this
+kind of detail — which is exactly why people say: "don’t roll your own crypto."
+
+To be clear, I think that phrase should really mean: go ahead and write your
+own — learn from it — then throw it away and use a well-tested, bulletproof
+implementation.
+
+In this case, you’ll need to write an unpad function that runs after
+decryption. But be careful: it’s not enough to just read the last byte and chop
+off that many bytes. You must verify that all of the last N bytes (where N is
+the last byte) actually match the value N. If they don’t, the data is malformed
+— and potentially dangerous to process.
+
+
 ---
 
 ## [10. Implement CBC mode](https://cryptopals.com/sets/2/challenges/10)
