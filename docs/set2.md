@@ -2,21 +2,23 @@
 
 ## [9. Implement PKCS#7 padding](https://cryptopals.com/sets/2/challenges/9)
 
-A block cipher transforms a fixed-sized block (usually 8 or 16 bytes) of plaintext into ciphertext. But we almost never want to transform a single block; we encrypt irregularly-sized messages.
+A block cipher transforms a fixed-sized block (usually 8 or 16 bytes) of
+plaintext into ciphertext. But we almost never want to transform a single
+block; we encrypt irregularly-sized messages.
 
-One way we account for irregularly-sized messages is by padding, creating a plaintext that is an even multiple of the blocksize. The most popular padding scheme is called PKCS#7.
+One way we account for irregularly-sized messages is by padding, creating a
+plaintext that is an even multiple of the blocksize. The most popular padding
+scheme is called PKCS#7.
 
-So: pad any block to a specific block length, by appending the number of bytes of padding to the end of the block. For instance,
-
-`"YELLOW SUBMARINE"`
-... padded to 20 bytes would be:
+So: pad any block to a specific block length, by appending the number of bytes
+of padding to the end of the block. For instance, p `"YELLOW SUBMARINE"` ...
+padded to 20 bytes would be:
 
 `"YELLOW SUBMARINE\x04\x04\x04\x04"`
 
 ---
 
 ## [10. Implement CBC mode](https://cryptopals.com/sets/2/challenges/10)
-
 
 CBC mode is a block cipher mode that allows us to encrypt irregularly-sized
 messages, despite the fact that a block cipher natively only transforms
@@ -36,6 +38,25 @@ them.
 
 The file here is intelligible (somewhat) when CBC decrypted against "YELLOW
 SUBMARINE" with an IV of all ASCII 0 (\x00\x00\x00 &c)
+
+### drio notes
+
+We are still working with the AES-128 algorithm, but now we are using a
+different mode. Before, we used ECB mode; now we are using CBC mode. ECB is
+weak because blocks with the same plaintext yield the same ciphertext. You can
+leverage that to build an attack (we'll see that in later challenges).
+
+In this challenge, we are changing the mode. The key difference is that in CBC
+mode, each plaintext block is XORed with the previous ciphertext block before
+encryption. Because there is no "previous block" for the first block, we start
+with an initialization vector (IV).
+
+
+```
+Cᵢ = AES-ECB-Encrypt(Pᵢ XOR Cᵢ₋₁)
+For the first block: C₀ = AES-Encrypt(P₀ XOR IV)
+```
+
 
 ---
 

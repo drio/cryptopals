@@ -1,5 +1,5 @@
 package main
 
 func main() {
-	runSet2Ch09()
+	runSet2Ch10()
 }
