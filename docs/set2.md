@@ -79,12 +79,70 @@ For the first block: C₀ = AES-Encrypt(P₀ XOR IV)
 
 ## [11. An ECB/CBC detection oracle](https://cryptopals.com/sets/2/challenges/11)
 
-> Write a function that encrypts data under ECB or CBC, randomly.  
-> It should:
-> - Append 5–10 random bytes before and after the input
-> - Use a random AES key
-> - Choose ECB or CBC at random
-> Detect which mode was used by analyzing the ciphertext.
+Now that you have ECB and CBC working:
+
+Write a function to generate a random AES key; that's just 16 random bytes.
+
+Write a function that encrypts data under an unknown key --- that is, a
+function that generates a random key and encrypts under it.
+
+The function should look like:
+
+```
+encryption_oracle(your-input)
+=> [MEANINGLESS JIBBER JABBER]
+```
+
+Under the hood, have the function append 5-10 bytes (count chosen randomly)
+before the plaintext and 5-10 bytes after the plaintext.
+
+Now, have the function choose to encrypt under ECB 1/2 the time, and under CBC
+the other half (just use random IVs each time for CBC). Use rand(2) to decide
+which to use.
+
+Detect the block cipher mode the function is using each time. You should end up
+with a piece of code that, pointed at a block box that might be encrypting ECB
+or CBC, tells you which one is happening.
+
+### Drio notes
+
+So we have implemented AES encryption in both, ECB and CBC modes.
+
+- ECB -> encrypts each block independently: same plaintext blocks yield same ciphertext blocks.
+- CBC -> XORs each block with the previous ciphertext block (or IV) before encryption.
+    -> No leaking
+
+What is this challenge asking?
+
+1. Simulate an oracle `function(input []bytes)`:
+    1. randomly decides if to encrypt in ECB or CBC mode.
+    2. prepends and appends 5-10 random bytes to your input
+    3. it uses a new random key (and IV for CBC) every time.
+2. Run the oracle with a "crafted" input. 
+    1. Analyze the ciphertext returned.
+    2. Was this ECB or CBC?
+
+The second part could be done like so:
+
+```go
+func isECBorCBC() string {
+    input := bytes.Repeat([]byte("A"), 128)
+    cipherText := oracle(input)
+
+    numDups := countDuplicateBlocks(cipherText, 16)
+
+    if numDups > 0 {
+        return "ECB"
+    } else {
+        return "CBC"
+    }
+}
+```
+
+
+
+
+
 
 ---
 

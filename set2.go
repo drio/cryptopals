@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+	crand "crypto/rand"
 	"fmt"
 	"log"
+	mrand "math/rand"
 )
 
 // Pad plainText with n bytes based on blockSize using PCKS#7
@@ -56,7 +58,7 @@ func runSet2Ch09() {
 
 func getAESCipher(key []byte) cipher.Block {
 	if len(key) != 16 {
-		log.Fatal("invalid key size")
+		log.Fatal("getAESCipher(): invalid key size: %d", len(key))
 	}
 
 	block, err := aes.NewCipher(key)
@@ -136,4 +138,83 @@ func runSet2Ch10() {
 	fmt.Printf("inputText : %s\n", plainText)
 	fmt.Printf("cipherText: %x\n", cipherText)
 	fmt.Printf("result    : %s\n", unpadResult)
+}
+
+// encryptECB encrypts plainText with AES in ECB mode
+func encryptECB(plainText, key []byte) []byte {
+	block := getAESCipher(key)
+	blockSize := 16
+
+	paddedPlainText := padPCKS7(plainText, blockSize)
+	cipherText := make([]byte, len(paddedPlainText))
+	for i := 0; i < len(paddedPlainText); i += blockSize {
+		plainChunk := paddedPlainText[i : i+blockSize]
+		block.Encrypt(cipherText[i:i+blockSize], plainChunk)
+	}
+
+	return cipherText
+}
+
+// genRandSlice creates a slice of size between [min, max] with
+// random bytes in it
+func genRandSlice(min, max int) []byte {
+	if min == 0 {
+		log.Fatalf("genRandSlice(): min cannot be 0")
+	}
+	to := (max - min) + 1
+	newSlice := []byte{}
+	for range min + mrand.Intn(to) {
+		b := make([]byte, 1)
+		crand.Read(b)
+		newSlice = append(newSlice, b...)
+	}
+	return newSlice
+}
+
+// genRandomAESKey creates a random key for AES
+func genRandomAESKey() []byte {
+	k := make([]byte, 16)
+	for i := range 16 {
+		b := make([]byte, 1)
+		crand.Read(b)
+		k[i] += b[0]
+	}
+	return k
+}
+
+// AESOracle receives a plaintext and:
+//  1. randomly decides if to encrypt in ECB or CBC mode.
+//  2. prepends and appends 5-10 random bytes to your input
+//  3. it uses a new random key (and IV for CBC) every time.
+func AESOracle(plaintext []byte) []byte {
+	// pick a mode
+	mode := ""
+	if mrand.Intn(2) == 0 {
+		mode = "ECB"
+	} else {
+		mode = "CBC"
+	}
+
+	// add random pre / post
+	pre := genRandSlice(5, 10)
+	pos := genRandSlice(5, 10)
+	withPre := append(pre, plaintext...)
+	withPrePos := append(withPre, pos...)
+
+	key := genRandomAESKey()
+	cipherText := []byte{}
+	if mode == "ECB" {
+		cipherText = encryptECB(withPrePos, key)
+	}
+
+	if mode == "CBC" {
+		iv := []byte("IVIVIV SUBMARINE") // TODO: random
+		cipherText = encryptCBC(withPrePos, key, iv)
+	}
+
+	return cipherText
+}
+
+func runSet2Ch11() {
+	fmt.Printf("%x", AESOracle([]byte("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")))
 }
