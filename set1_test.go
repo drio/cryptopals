@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/hex"
 	"log"
 	"strings"
@@ -175,6 +176,169 @@ func TestComputeBlockHD(t *testing.T) {
 		result = computeBlockHD(shortData, 10)
 		if result.sumHD != 0.0 {
 			t.Errorf("Expected 0 when keySize is larger than data length, got %2.2f", result.sumHD)
+		}
+	})
+}
+
+func TestGenBlocks(t *testing.T) {
+	t.Run("Even division", func(t *testing.T) {
+		data := []byte("0123456789ABCDEF")
+		blockSize := 4
+		expected := [][]byte{
+			[]byte("0123"),
+			[]byte("4567"),
+			[]byte("89AB"),
+			[]byte("CDEF"),
+		}
+
+		blocks := genBlocks(data, blockSize)
+		
+		if len(blocks) != len(expected) {
+			t.Fatalf("Expected %d blocks, got %d blocks", len(expected), len(blocks))
+		}
+		
+		for i, block := range blocks {
+			if string(block) != string(expected[i]) {
+				t.Errorf("Block %d: expected %q, got %q", i, expected[i], block)
+			}
+		}
+	})
+
+	t.Run("Uneven division", func(t *testing.T) {
+		data := []byte("0123456789AB")
+		blockSize := 5
+		expected := [][]byte{
+			[]byte("01234"),
+			[]byte("56789"),
+			[]byte("AB"),
+		}
+
+		blocks := genBlocks(data, blockSize)
+		
+		if len(blocks) != len(expected) {
+			t.Fatalf("Expected %d blocks, got %d blocks", len(expected), len(blocks))
+		}
+		
+		for i, block := range blocks {
+			if string(block) != string(expected[i]) {
+				t.Errorf("Block %d: expected %q, got %q", i, expected[i], block)
+			}
+		}
+	})
+
+	t.Run("Single block", func(t *testing.T) {
+		data := []byte("01234")
+		blockSize := 8
+		expected := [][]byte{
+			[]byte("01234"),
+		}
+
+		blocks := genBlocks(data, blockSize)
+		
+		if len(blocks) != len(expected) {
+			t.Fatalf("Expected %d blocks, got %d blocks", len(expected), len(blocks))
+		}
+		
+		for i, block := range blocks {
+			if string(block) != string(expected[i]) {
+				t.Errorf("Block %d: expected %q, got %q", i, expected[i], block)
+			}
+		}
+	})
+
+	t.Run("Empty data", func(t *testing.T) {
+		data := []byte{}
+		blockSize := 4
+		
+		blocks := genBlocks(data, blockSize)
+		
+		if len(blocks) != 0 {
+			t.Fatalf("Expected 0 blocks for empty data, got %d blocks", len(blocks))
+		}
+	})
+}
+
+func TestFindBlockDuplicates(t *testing.T) {
+	t.Run("No duplicates", func(t *testing.T) {
+		blocks := [][]byte{
+			[]byte("AAAA"),
+			[]byte("BBBB"),
+			[]byte("CCCC"),
+			[]byte("DDDD"),
+		}
+		
+		duplicateCount := findBlockDuplicates(blocks)
+		
+		if duplicateCount != 0 {
+			t.Errorf("Expected 0 duplicates, got %d", duplicateCount)
+		}
+	})
+	
+	t.Run("Single duplicate", func(t *testing.T) {
+		blocks := [][]byte{
+			[]byte("AAAA"),
+			[]byte("BBBB"),
+			[]byte("BBBB"), // Duplicate
+			[]byte("CCCC"),
+		}
+		
+		duplicateCount := findBlockDuplicates(blocks)
+		
+		if duplicateCount != 1 {
+			t.Errorf("Expected 1 duplicate, got %d", duplicateCount)
+		}
+	})
+	
+	t.Run("Multiple duplicates of same block", func(t *testing.T) {
+		blocks := [][]byte{
+			[]byte("AAAA"),
+			[]byte("BBBB"),
+			[]byte("AAAA"), // Duplicate 1
+			[]byte("AAAA"), // Duplicate 2
+		}
+		
+		duplicateCount := findBlockDuplicates(blocks)
+		
+		if duplicateCount != 2 {
+			t.Errorf("Expected 2 duplicates, got %d", duplicateCount)
+		}
+	})
+	
+	t.Run("Multiple different duplicates", func(t *testing.T) {
+		blocks := [][]byte{
+			[]byte("AAAA"),
+			[]byte("BBBB"),
+			[]byte("AAAA"), // Duplicate of A
+			[]byte("BBBB"), // Duplicate of B
+		}
+		
+		duplicateCount := findBlockDuplicates(blocks)
+		
+		if duplicateCount != 2 {
+			t.Errorf("Expected 2 duplicates, got %d", duplicateCount)
+		}
+	})
+	
+	t.Run("Empty blocks", func(t *testing.T) {
+		blocks := [][]byte{}
+		
+		duplicateCount := findBlockDuplicates(blocks)
+		
+		if duplicateCount != 0 {
+			t.Errorf("Expected 0 duplicates for empty input, got %d", duplicateCount)
+		}
+	})
+
+	t.Run("ECB detection example", func(t *testing.T) {
+		// This simulates detecting ECB mode with repeating plaintext blocks
+		// creating duplicate ciphertext blocks
+		repeatingData := bytes.Repeat([]byte("AAAAAAAAAAAAAAAA"), 10) // 10 identical blocks
+		blocks := genBlocks(repeatingData, 16)
+		
+		duplicateCount := findBlockDuplicates(blocks)
+		
+		if duplicateCount != 9 { // 10 blocks, 9 are duplicates
+			t.Errorf("Expected 9 duplicates for ECB detection example, got %d", duplicateCount)
 		}
 	})
 }
