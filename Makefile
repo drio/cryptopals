@@ -11,7 +11,7 @@ vulncheck:
 	go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 
 test:
-	go test  *.go
+	go test -v *.go
 
 watch:
 	reflex -r '\.go$$' -- sh -c "go test -v ./..."

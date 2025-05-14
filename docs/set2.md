@@ -114,7 +114,7 @@ So we have implemented AES encryption in both, ECB and CBC modes.
 
 What is this challenge asking?
 
-1. Simulate an oracle `function(input []bytes)`:
+1. Simulate a `function oracle(input []bytes)`:
     1. randomly decides if to encrypt in ECB or CBC mode.
     2. prepends and appends 5-10 random bytes to your input
     3. it uses a new random key (and IV for CBC) every time.

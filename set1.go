@@ -407,6 +407,7 @@ func runSet1Ch7() {
 	fmt.Printf("%s\n", dst)
 }
 
+// genBlocks returns byte blocks of blockSize from data
 func genBlocks(data []byte, blockSize int) [][]byte {
 	var chunks [][]byte
 	for i := 0; i < len(data); i += blockSize {
@@ -416,6 +417,24 @@ func genBlocks(data []byte, blockSize int) [][]byte {
 	return chunks
 }
 
+// findBlockDuplicates counts the number of blocks that are duplicates
+func findBlockDuplicates(blocks [][]byte) int {
+	mapDuplicates := make(map[string]int)
+	totalDupCount := 0
+
+	for _, block := range blocks {
+		mapDuplicates[string(block)] += 1
+	}
+
+	for _, count := range mapDuplicates {
+		if count > 1 {
+			totalDupCount += count - 1
+		}
+	}
+
+	return totalDupCount
+}
+
 func runSet1Ch8() {
 	blockSize := 16
 	bestLine := ""
@@ -423,18 +442,7 @@ func runSet1Ch8() {
 
 	eachLine("data/set1/8.txt", func(line string, lineNum int) {
 		lineBytes := hexToBin(line)
-		mapDuplicates := make(map[string]int)
-		totalDupCount := 0
-
-		for _, block := range genBlocks(lineBytes, blockSize) {
-			mapDuplicates[string(block)] += 1
-		}
-
-		for _, count := range mapDuplicates {
-			if count > 1 {
-				totalDupCount += count - 1
-			}
-		}
+		totalDupCount := findBlockDuplicates(genBlocks(lineBytes, blockSize))
 
 		if totalDupCount > bestCount {
 			bestCount = totalDupCount

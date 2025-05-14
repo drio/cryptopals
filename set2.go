@@ -58,7 +58,7 @@ func runSet2Ch09() {
 
 func getAESCipher(key []byte) cipher.Block {
 	if len(key) != 16 {
-		log.Fatal("getAESCipher(): invalid key size: %d", len(key))
+		log.Fatalf("getAESCipher(): invalid key size: %d", len(key))
 	}
 
 	block, err := aes.NewCipher(key)
@@ -158,9 +158,6 @@ func encryptECB(plainText, key []byte) []byte {
 // genRandSlice creates a slice of size between [min, max] with
 // random bytes in it
 func genRandSlice(min, max int) []byte {
-	if min == 0 {
-		log.Fatalf("genRandSlice(): min cannot be 0")
-	}
 	to := (max - min) + 1
 	newSlice := []byte{}
 	for range min + mrand.Intn(to) {
@@ -186,7 +183,7 @@ func genRandomAESKey() []byte {
 //  1. randomly decides if to encrypt in ECB or CBC mode.
 //  2. prepends and appends 5-10 random bytes to your input
 //  3. it uses a new random key (and IV for CBC) every time.
-func AESOracle(plaintext []byte) []byte {
+func AESOracle(plaintext []byte) ([]byte, string) {
 	// pick a mode
 	mode := ""
 	if mrand.Intn(2) == 0 {
@@ -212,9 +209,24 @@ func AESOracle(plaintext []byte) []byte {
 		cipherText = encryptCBC(withPrePos, key, iv)
 	}
 
-	return cipherText
+	return cipherText, mode
 }
 
 func runSet2Ch11() {
-	fmt.Printf("%x", AESOracle([]byte("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")))
+	plainText := bytes.Repeat([]byte("A"), 128)
+
+	// Part 1: we have the oracle implemented
+	cipherText, mode := AESOracle(plainText)
+
+	// Part 2: write logic to determine if the oracle used ECB or CBC
+	call := ""
+	if findBlockDuplicates(genBlocks(cipherText, 16)) > 0 {
+		call = "ECB"
+	} else {
+		call = "CBC"
+	}
+	// test with: for i in $(seq 1 100); do make run; echo ; done
+	if mode != call {
+		log.Fatalf("Call did not match the oracle! oracle=%s call=%s plaintext=%x\n", mode, call, plainText)
+	}
 }
