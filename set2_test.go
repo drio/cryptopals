@@ -134,13 +134,13 @@ func TestGenRandomAESKey(t *testing.T) {
 		// Generate multiple keys and ensure they're all different
 		numKeys := 100
 		keys := make([][]byte, numKeys)
-		
-		for i := 0; i < numKeys; i++ {
+
+		for i := range numKeys {
 			keys[i] = genRandomAESKey()
 		}
-		
+
 		// Check that all keys are different from each other
-		for i := 0; i < numKeys; i++ {
+		for i := range numKeys {
 			for j := i + 1; j < numKeys; j++ {
 				if bytes.Equal(keys[i], keys[j]) {
 					t.Errorf("Keys %d and %d are identical, which suggests a problem with randomness", i, j)

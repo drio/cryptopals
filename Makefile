@@ -18,8 +18,8 @@ watch:
 
 coverage:
 	go test -coverprofile=coverage.out ./...
-	go tool cover -func=coverage.out
-	cat coverage.out
+	#go tool cover -func=coverage.out
+	#cat coverage.out
 
 init:
 	go mod init github.com/drio/$(PRJ)
