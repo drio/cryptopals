@@ -186,7 +186,6 @@ the first block of each invocation.
 5. Match the output of the one-byte-short input to one of the entries in your
    dictionary. You've now discovered the first byte of unknown-string.
 
-
 6. Repeat for the next byte.
 
 Congratulations.
@@ -198,6 +197,61 @@ those ciphertexts, and now you can. If our experience is any guideline, this
 attack will get you code execution in security tests about once a year.
 
 ### Drio comments
+
+Ok, this is pretty cool.
+
+We have that base64 encoded text (I can't wait to decrypt it!) that is 
+the plaintext we want to get to when we break the cipher.
+
+`AES-128-ECB(your-string || unknown-string, random-key)`
+
+We control the `your-string`. 
+
+Steps: 
+
+1. Modify the Oracle function from the previous step so it 
+appends an input that you pass to the plaintext. Then encodes it using 
+ECB. 
+
+2. Detect the block size. How? 
+Call the Oracle with a variable input length. Check the length of the 
+output. As soon as the output length increases, the difference between
+the ciphertext and the plaintext gives you the block size.
+
+3. Confirm we are using ECB mode. If so, we should see duplicates in the
+ciphertext blocks.
+
+4. Recover the unknown-string (US). The fun part.
+
+Decrypt the first block of plaintext.
+
+Step 1: get the block0 of the output from the oracle.
+
+```
+your-string = A*15
+ciphertext = Oracle(your-string, plaintext)
+block0 = cipherText[0:16]
+```
+
+Step 2: build a map of all the possible first blocks for
+        constrains of A*15 + byte, where byte is any value
+        from 0 to 255.
+
+```
+for b in 0..255:
+   plaintext = "A"*15 + byte(b)
+   ciphertext = oracle(plaintext)
+   dict[ciphertex[0:16]] = b
+```
+
+Step 3: match the dict keys against block0, one of the 
+keys will match. If so, the value returned by the dict
+is the first byte of the plaintext.
+
+When you are done with a block, do the same for the next block
+until there are no more blocks to work with.
+
+
 
 
 
