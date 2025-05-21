@@ -5,9 +5,11 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	crand "crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"log"
 	mrand "math/rand"
+	"slices"
 )
 
 // Pad plainText with n bytes based on blockSize using PCKS#7
@@ -229,4 +231,116 @@ func runSet2Ch11() {
 	if mode != call {
 		log.Fatalf("Call did not match the oracle! oracle=%s call=%s plaintext=%x\n", mode, call, plainText)
 	}
+}
+
+func makeOracle(key, unknownB64 string) func([]byte) []byte {
+	unknown, err := base64.StdEncoding.DecodeString(unknownB64)
+	if err != nil {
+		panic(err)
+	}
+
+	return func(input []byte) []byte {
+		plain := append(input, unknown...)
+		return encryptECB(plain, []byte(key))
+	}
+}
+
+// encrypt plaintext with AES in ECB mode using key
+func AESOracleECBWithPre(pre, plaintext, key []byte) []byte {
+	withPre := append(pre, plaintext...)
+
+	cipherText := []byte{}
+	cipherText = encryptECB(withPre, key)
+
+	return cipherText
+}
+
+func runSet2Ch12() {
+	base64Plain := `Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK`
+	key := `YELLOW SUBMARINE`
+
+	oracle := makeOracle(key, base64Plain)
+
+	// Part 1: Find the BlockSize size (16)
+	detectBlockSize := func() int {
+		initialLen := len(oracle([]byte{}))
+		for i := range 64 {
+			input := bytes.Repeat([]byte("A"), i)
+			newLen := len(oracle(input))
+			if newLen > initialLen {
+				return newLen - initialLen
+			}
+		}
+		panic("could not detect block size")
+	}
+	blockSize := detectBlockSize()
+	fmt.Printf("block size: %d\n", detectBlockSize())
+
+	isECB := func(blockSize int) bool {
+		input := bytes.Repeat([]byte("A"), blockSize*3) // 3 identical blocks
+		ct := oracle(input)
+
+		// Break into blocks
+		seen := make(map[string]bool)
+		for i := 0; i < len(ct); i += blockSize {
+			block := string(ct[i : i+blockSize])
+			if seen[block] {
+				return true // duplicate found → ECB
+			}
+			seen[block] = true
+		}
+		return false
+	}
+	if isECB(blockSize) == false {
+		panic("Not ECB mode used AES cipher!")
+	}
+	fmt.Printf("AES cipher in ECB mode. Good.\n")
+
+	recoverCipherText := func() []byte {
+		var recovered []byte
+		for {
+			// Determine the block index we’re targeting
+			currentBlock := len(recovered) / blockSize
+
+			// Figure out how much padding is needed to shift the next unknown byte
+			// into the last byte of the current block
+			bytesInBlock := len(recovered) % blockSize
+			numPaddingBytes := blockSize - 1 - bytesInBlock
+			padding := bytes.Repeat([]byte("A"), numPaddingBytes)
+			fullCiphertext := oracle(padding)
+			// Extract the block containing the unknown byte
+			start := currentBlock * blockSize
+			end := start + blockSize
+			if end > len(fullCiphertext) {
+				break // Oracle response is shorter than expected; probably done
+			}
+			targetBlock := fullCiphertext[start:end]
+
+			// Try all 256 possible values for the next byte
+			var found bool
+			for guess := range 256 {
+				// Construct the input: padding + recovered + guess byte
+				testInput := slices.Clone(padding)
+				testInput = append(testInput, recovered...)
+				testInput = append(testInput, byte(guess))
+
+				// Get ciphertext for this input
+				testCiphertext := oracle(testInput)
+				testBlock := testCiphertext[start:end]
+
+				if bytes.Equal(testBlock, targetBlock) {
+					recovered = append(recovered, byte(guess))
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				break // No match found — likely end of the unknown string
+			}
+		}
+
+		return recovered
+	}
+	fmt.Printf("%s\n", recoverCipherText())
 }
