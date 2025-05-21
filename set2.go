@@ -276,6 +276,7 @@ func runSet2Ch12() {
 	blockSize := detectBlockSize()
 	fmt.Printf("block size: %d\n", detectBlockSize())
 
+	// Part2: confirm the cipher run in ECB mode
 	isECB := func(blockSize int) bool {
 		input := bytes.Repeat([]byte("A"), blockSize*3) // 3 identical blocks
 		ct := oracle(input)
@@ -296,6 +297,10 @@ func runSet2Ch12() {
 	}
 	fmt.Printf("AES cipher in ECB mode. Good.\n")
 
+	// Part 3: This is the fun part. Break the cipherText using some
+	// clever techniques that exploit the deficiencies of AES in ECB
+	// mode. Mainly the fact that the same input plainText produces
+	// the same chipherText.
 	recoverCipherText := func() []byte {
 		var recovered []byte
 		for {
