@@ -159,6 +159,30 @@ func encryptECB(plainText, key []byte) []byte {
 	return cipherText
 }
 
+func decryptECB(ciphertext, key []byte) []byte {
+	if len(ciphertext)%aes.BlockSize != 0 {
+		log.Fatalf("ciphertext is not a multiple of the block size")
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		log.Fatalf("Can't get cipher: %s", err)
+	}
+
+	plaintext := make([]byte, len(ciphertext))
+	for start := 0; start < len(ciphertext); start += aes.BlockSize {
+		block.Decrypt(plaintext[start:start+aes.BlockSize], ciphertext[start:start+aes.BlockSize])
+	}
+
+	// Remove PKCS#7 padding
+	plaintext = unpadPKCS7(plaintext)
+	if err != nil {
+		log.Fatalf("Can't get cipher: %s", err)
+	}
+
+	return plaintext
+}
+
 // genRandSlice creates a slice of size between [min, max] with
 // random bytes in it
 func genRandSlice(min, max int) []byte {
@@ -365,6 +389,7 @@ func runSet2Ch12() {
 	fmt.Printf("%s\n", recoverCipherText())
 }
 
+// Ch13: part 1: key-value parser
 func parseKV(input string) map[string]string {
 	values, _ := url.ParseQuery(input)
 	result := make(map[string]string)
@@ -374,8 +399,37 @@ func parseKV(input string) map[string]string {
 	return result
 }
 
+// Ch13: part 2: generateProfile
 func profileFor(email string) string {
 	// Strip '&' and '=' to prevent injection
 	safeEmail := strings.ReplaceAll(strings.ReplaceAll(email, "&", ""), "=", "")
 	return "email=" + safeEmail + "&uid=10&role=user"
+}
+
+// Ch13: part 3: encrypt/decrypt profiles using AES-ECB
+type profileTool struct {
+	key []byte
+}
+
+func (pt *profileTool) init() {
+	pt.key = genRandomAESKey()
+}
+
+func (pt *profileTool) encrypt(profile string) []byte {
+	return encryptECB([]byte(profile), []byte(pt.key))
+}
+
+func (pt *profileTool) decrypt(cipherText []byte) map[string]string {
+	queryString := decryptECB([]byte(cipherText), []byte(pt.key))
+	return parseKV(string(queryString))
+}
+
+func runSet2Ch13() {
+	// Ch13-part3
+	pt := profileTool{}
+	pt.init()
+	plainText := "email=name@email.com&role=admin"
+	cipherText := pt.encrypt(plainText)
+	fmt.Printf("%x\n", cipherText)
+	fmt.Printf("%v\n", pt.decrypt(cipherText))
 }
