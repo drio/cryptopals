@@ -423,7 +423,7 @@ func runSet2Ch13() {
 	// Ch13-part3
 	pt := profileTool{}
 	pt.init()
-	plainText := "name@email.com"
+	plainText := profileFor("rufus@wonderland.com")
 	cipherText := pt.encrypt(plainText)
 	fmt.Println("Decrypted profile:")
 	for k, v := range pt.decrypt(cipherText) {
