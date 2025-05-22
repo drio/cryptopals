@@ -299,21 +299,25 @@ func runSet2Ch12() {
 
 	// Part 3: This is the fun part. Break the cipherText using some
 	// clever techniques that exploit the deficiencies of AES in ECB
-	// mode. Mainly the fact that the same input plainText produces
-	// the same chipherText.
+	// mode. Mainly the fact that the the same 16-byte plaintext
+	// block always encrypts to the same ciphertext block.
 	recoverCipherText := func() []byte {
 		var recovered []byte
 		for {
 			// Determine the block index we’re targeting
 			currentBlock := len(recovered) / blockSize
 
-			// Figure out how much padding is needed to shift the next unknown byte
-			// into the last byte of the current block
+			// Run the oracle with the appropriate padding so the byte we
+			// are trying to decrypt aligns with the end of the current
+			// block
 			bytesInBlock := len(recovered) % blockSize
 			numPaddingBytes := blockSize - 1 - bytesInBlock
 			padding := bytes.Repeat([]byte("A"), numPaddingBytes)
 			fullCiphertext := oracle(padding)
-			// Extract the block containing the unknown byte
+
+			// Let's now get the cipherText values for the block
+			// This will be our target block and we want to decrypt the
+			// last byte
 			start := currentBlock * blockSize
 			end := start + blockSize
 			if end > len(fullCiphertext) {
@@ -321,7 +325,16 @@ func runSet2Ch12() {
 			}
 			targetBlock := fullCiphertext[start:end]
 
-			// Try all 256 possible values for the next byte
+			// Now we have our target block.
+			// We know all [0:blockSize-2] bytes we need to decrypt [0:blockSize-1]
+			// We know AES(ECB) is deterministic on its output giving the same input.
+			// So we can enumerate all possible 255 byte values (guess).
+			// We can generate a plainText that looks like:
+			// testInput = padding + recovered pt + guess
+			// Then we can run AES_ECB on that plainText (testInput) and compare the
+			// result to our targetBlock. If targetBlock and testBlock (output) match
+			// then we know our guess was correct and that byte is part of the original
+			// plain text.
 			var found bool
 			for guess := range 256 {
 				// Construct the input: padding + recovered + guess byte
