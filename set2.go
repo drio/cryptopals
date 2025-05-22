@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"log"
 	mrand "math/rand"
+	"net/url"
 	"slices"
+	"strings"
 )
 
 // Pad plainText with n bytes based on blockSize using PCKS#7
@@ -361,4 +363,19 @@ func runSet2Ch12() {
 		return recovered
 	}
 	fmt.Printf("%s\n", recoverCipherText())
+}
+
+func parseKV(input string) map[string]string {
+	values, _ := url.ParseQuery(input)
+	result := make(map[string]string)
+	for k, v := range values {
+		result[k] = v[0] // only take the first value
+	}
+	return result
+}
+
+func profileFor(email string) string {
+	// Strip '&' and '=' to prevent injection
+	safeEmail := strings.ReplaceAll(strings.ReplaceAll(email, "&", ""), "=", "")
+	return "email=" + safeEmail + "&uid=10&role=user"
 }

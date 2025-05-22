@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"crypto/aes"
+	"reflect"
 	"testing"
 )
 
@@ -158,4 +159,45 @@ func TestGenRandomAESKey(t *testing.T) {
 			t.Errorf("Generated key is not valid for AES: %v", err)
 		}
 	})
+}
+
+func TestParseKV(t *testing.T) {
+	input := "foo=bar&baz=qux&zap=zazzle"
+	expected := map[string]string{
+		"foo": "bar",
+		"baz": "qux",
+		"zap": "zazzle",
+	}
+
+	result := parseKV(input)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("parseKV(%q) = %v; want %v", input, result, expected)
+	}
+}
+
+func TestProfileFor(t *testing.T) {
+	tests := []struct {
+		email    string
+		expected string
+	}{
+		{
+			email:    "foo@bar.com",
+			expected: "email=foo@bar.com&uid=10&role=user",
+		},
+		{
+			email:    "foo@bar.com&role=admin",
+			expected: "email=foo@bar.comroleadmin&uid=10&role=user",
+		},
+		{
+			email:    "a=b@c.com",
+			expected: "email=ab@c.com&uid=10&role=user",
+		},
+	}
+
+	for _, test := range tests {
+		result := profileFor(test.email)
+		if result != test.expected {
+			t.Errorf("profileFor(%q) =\n[%q];\n want [%q]", test.email, result, test.expected)
+		}
+	}
 }
