@@ -10,7 +10,7 @@ import (
 func TestSet09_PKCS7Padding(t *testing.T) {
 	t.Run("Basic padding test", func(t *testing.T) {
 		expect := []byte("YELLOW SUBMARINE\x04\x04\x04\x04")
-		got := padPCKS7([]byte("YELLOW SUBMARINE"), 20)
+		got := padPKCS7([]byte("YELLOW SUBMARINE"), 20)
 		if len(got) != len(expect) {
 			t.Errorf("wrong size, expecting %d and got %d", 20, len(got))
 		}
@@ -24,7 +24,7 @@ func TestSet09_PKCS7Padding(t *testing.T) {
 		input := []byte("0123456789ABCDEF") // 16 bytes
 		expected := append(input, bytes.Repeat([]byte{0x10}, 16)...)
 
-		padded := padPCKS7(input, 16)
+		padded := padPKCS7(input, 16)
 
 		if !bytes.Equal(padded, expected) {
 			t.Errorf("PKCS#7 padding failed.\nExpected: %v\nGot: %v",
