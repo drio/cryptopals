@@ -419,14 +419,62 @@ func (pt *profileTool) decrypt(cipherText []byte) map[string]string {
 	return parseKV(string(queryString))
 }
 
+func printBlocks(plainText []byte) {
+	for i := 0; i < len(plainText); i += 16 {
+		end := i + 16
+		if end > len(plainText) {
+			end = len(plainText)
+		}
+		fmt.Printf("Block %d: %x  // %q\n", i/16, plainText[i:end], plainText[i:end])
+	}
+}
+
 func runSet2Ch13() {
 	// Ch13-part3
+	// email=bar@foo.es&uid=10&role=user
 	pt := profileTool{}
 	pt.init()
-	plainText := profileFor("rufus@wonderland.com")
+
+	// Generate block where admin is at the start of a block
+	email := "foo@ba.comadmin"
+	plainText := profileFor(email)
 	cipherText := pt.encrypt(plainText)
-	fmt.Println("Decrypted profile:")
+	printBlocks([]byte(plainText))
+	fmt.Printf("Decrypted profile: len=%d rem=%d\n", len(plainText), len(plainText)%16)
 	for k, v := range pt.decrypt(cipherText) {
 		fmt.Printf("  %s: %s\n", k, v)
 	}
+
+	fmt.Printf("\n")
+
+	// Generate block where &role= ends at the end of a block
+	email = "foo@bar______"
+	plainText = profileFor(email)
+	cipherText = pt.encrypt(plainText)
+	printBlocks([]byte(plainText))
+	fmt.Printf("Decrypted profile: len=%d rem=%d\n", len(plainText), len(plainText)%16)
+	for k, v := range pt.decrypt(cipherText) {
+		fmt.Printf("  %s: %s\n", k, v)
+	}
+
+	fmt.Printf("\n")
+
+	// Now,
+	//
+	// Generate a new cipherText that is:
+	// Block 0 from second profile "email=foo@bar___"
+	// Block 1 from second profile "___&uid=10&role="
+	// Block 2 from first profile  "admin&uid=10&rol"
+	//
+	// Which gives us:
+	// "email=foo@bar______&uid=10&role=admin&uid=10&rol"
+	// Let's try it:
+	plainText = "email=foo@bar______&uid=10&role=admin&uid=10&rol"
+	cipherText = pt.encrypt(plainText)
+	printBlocks([]byte(plainText))
+	fmt.Printf("Decrypted profile: len=%d rem=%d\n", len(plainText), len(plainText)%16)
+	for k, v := range pt.decrypt(cipherText) {
+		fmt.Printf("  %s: %s\n", k, v)
+	}
+
 }

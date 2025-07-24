@@ -314,6 +314,34 @@ ciphertexts) and the ciphertexts themselves, make a role=admin profile.
 
 ### Drio comments
 
+This main purpose of this challenge is to show you that how you could exploid an 
+app that uses AES in ECB mode for their crypto. 
+The idea is that our profile is encoded and contains: email, role and uid.
+What we can do is to use the weaknesses of AES in ECB mode to forge a cipherText 
+that is AES ECB encrypted but contains the role admin. To do so we:
+
+1. Write a ciphertext by modifying the email that pushes the admin to the start of a block.
+2. Write another ciphertext so the `&role=` parts end at the end of the block
+3. cut and paste:
+
+    ```
+    From the first profile:
+
+    Block 1: 61646d696e267569643d313026726f6c = "admin&uid=10&rol"
+
+    From the second profile:
+
+    Block 0: 656d61696c3d666f6f406261725f5f5f = "email=foo@bar___"
+    Block 1: 5f5f5f267569643d313026726f6c653d = "___&uid=10&role="
+
+    The Attack
+    Combine:
+
+    Block 0 from second profile: "email=foo@bar___"
+    Block 1 from second profile: "___&uid=10&role="
+    Block 1 from first profile: "admin&uid=10&rol"
+
+    ```
 
 ---
 
