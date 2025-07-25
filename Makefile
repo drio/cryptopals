@@ -3,6 +3,10 @@ PRJ=cryptopals
 all:
 	@cat Makefile | more
 
+# Clear everything (build cache, module cache, and test cache):
+clean-cache:
+	go clean -cache -modcache -testcache
+
 run:
 	@go run $$(find . -maxdepth 1 -name '*.go' ! -name '*_test.go' | sort)
 
@@ -28,4 +32,5 @@ init:
 
 lint:
 	golangci-lint run --fix .
+
 
