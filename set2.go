@@ -197,7 +197,7 @@ func genRandomAESKey() []byte {
 	for i := range 16 {
 		b := make([]byte, 1)
 		crand.Read(b)
-		k[i] += b[0]
+		k[i] = b[0]
 	}
 	return k
 }
